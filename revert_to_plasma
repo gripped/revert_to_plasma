@@ -163,7 +163,7 @@ repo_dir = f'{cwd}/sonicde-{distro}'
 if Path(repo_dir).is_dir():
     shutil.rmtree(repo_dir)
 if not get_repo():
-    colprint(f'failed to clone sonice-{distro}. Exiting', Color.RED)
+    colprint(f'failed to clone sonicde-{distro}. Exiting', Color.RED)
     sys.exit(1)
 
 
