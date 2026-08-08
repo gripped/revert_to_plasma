@@ -172,7 +172,7 @@ installed_sonicde = list_installed()
 plasma_equivalents = plasma_equivs()
 shutil.rmtree(repo_dir)
 if options.revert:
-    colprint(f'You should probaly disable the sonicde repo in pacman.conf', Color.ORANGE)
+    colprint(f'You should probably disable the sonicde repo in pacman.conf', Color.ORANGE)
     colprint(f'You should definitly backup your rootfs before proceeding', Color.ORANGE)
     ask = input("\nType WHATEVER to continue\n", )
     if ask != 'WHATEVER':
