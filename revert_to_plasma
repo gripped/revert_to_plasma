@@ -1,0 +1,181 @@
+#!/usr/bin/python -u
+#
+#  revert_to_plasma         List sonicde plasma equivalents.
+#                                          Optionally switch back to plasma from sonicde.
+#
+
+import argparse
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+distro = 'artix'
+print_sys_cmds = True
+quiet = False
+OUTPUT = "OUT"
+EXIT_CODE = "EXIT"
+
+
+class Color:
+    CYAN = '\033[34m'
+    ORANGE = '\033[33m'
+    GREEN = '\033[36m'
+    RED = '\033[31m'
+    END = '\033[0m'
+
+
+def colprint(text, color=Color.END):
+    parts = text.split('¬')
+    for i, part in enumerate(parts):
+        if i % 2 == 0:
+            print(color, end='')
+        else:
+            print(Color.END, end='')
+        print(part, end='')
+    print(f'{Color.END}')
+
+
+def get_conflicts(lines):
+    for line in lines:
+        line = line.strip()
+
+        if line.startswith('conflicts'):
+            conflicts = line.split('(', 1)[1].split(')', 1)[0]
+            return conflicts.split()
+
+    return []
+
+
+def get_repo():
+    if run_command(f'git clone https://github.com/sonicde-{distro}/sonicde-{distro}', EXIT_CODE) == 0:
+        return True
+    return False
+
+
+def list_dirs():
+    contents = os.listdir(repo_dir)
+    pkg_dirs = []
+    for file in contents:
+        if (Path(repo_dir) / file).is_dir() and file not in ('docs', '.git'):
+            pkg_dirs.append(file)
+    return pkg_dirs
+
+
+def list_installed():
+
+    installed = []
+    for p_dir in package_dirs:
+        if run_command(f'pacman -Qq {p_dir}', EXIT_CODE) == 0:
+            installed.append(p_dir)
+    return installed
+
+
+def revert_to_plasma():
+    sonicde_pkgs = [equiv['sonicde'] for equiv in plasma_equivalents]
+    plasma_pkgs = [
+        plasma_pkg
+        for equiv in plasma_equivalents
+        for plasma_pkg in equiv['plasma']
+        if plasma_pkg not in ('plasma-framework', 'plasma-wayland-session', 'kactivities')
+    ]
+
+    result = run_command(
+        f"pacman -Rdd --noconfirm {' '.join(sonicde_pkgs)} sonic-x11-session",
+        EXIT_CODE
+    )
+
+    if result == 0:
+        run_command(
+            f"pacman -S --noconfirm {' '.join(plasma_pkgs)} plasma-x11-session",
+            EXIT_CODE
+        )
+
+
+def run_command(cmd, opt):
+    try:
+        if print_sys_cmds:
+            colprint(f'{cmd}', Color.GREEN)
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True, user=os.geteuid(), group=os.getegid())
+        os.set_blocking(process.stdout.fileno(), False)
+        os.set_blocking(process.stderr.fileno(), False)
+        stdout_lines = []
+        while True:
+            stdout_line = process.stdout.readline()
+            stderr_line = process.stderr.readline()
+            if stdout_line:
+                stdout_lines.append(stdout_line)
+                if not quiet:
+                    print(stdout_line, end='')
+            if stderr_line:
+                if not quiet:
+                    print(stderr_line, end='')
+            if process.poll() is not None and stdout_line == '' and stderr_line == '':
+                break
+        if opt == OUTPUT:
+            return ''.join(stdout_lines)
+        if opt == EXIT_CODE:
+            return process.returncode
+    except Exception as e:
+        colprint(*e.args, Color.RED)
+        return 'Error'
+
+
+def setup_options():
+    parser = argparse.ArgumentParser(
+        prog='revert_to_plasma',
+        description='List installed sonicde plasma equivalents. Optionally switch back to plasma from sonicde.',
+        epilog='With no options given a list of installed sonicde plasma equivalents will be shown'
+    )
+    parser.add_argument(
+        "--revert", "-r",
+        action="store_true",
+        default=False,
+        help="Replace sonicde packages with plasma packages"
+    )
+
+    args = parser.parse_args()
+    return args
+
+
+def plasma_equivs():
+    equiv_list = []
+    for p_dir in installed_sonicde:
+        pkgbuild = os.path.join(repo_dir, p_dir, 'PKGBUILD')
+        with open(pkgbuild) as file:
+            pkgbuild_lines = file.readlines()
+        equiv = get_conflicts(pkgbuild_lines)
+        equiv_list.append({
+            'plasma': equiv,
+            'sonicde': p_dir
+        })
+
+    colprint('List of installed sonicde packages and their plasma equivalents.', Color.CYAN)
+    for equiv in equiv_list:
+        print(f"sonicde: {equiv['sonicde']:<40} plasma: {', '.join(equiv['plasma'])}")
+    print(f"sonicde: {'sonic-x11-session':<40} plasma:")
+    return equiv_list
+
+
+options = setup_options()
+cwd = os.getcwd()
+repo_dir = f'{cwd}/sonicde-{distro}'
+if Path(repo_dir).is_dir():
+    shutil.rmtree(repo_dir)
+if not get_repo():
+    colprint(f'failed to clone sonice-{distro}. Exiting', Color.RED)
+    sys.exit(1)
+
+
+package_dirs = list_dirs()
+installed_sonicde = list_installed()
+plasma_equivalents = plasma_equivs()
+shutil.rmtree(repo_dir)
+if options.revert:
+    colprint(f'You should probaly disable the sonicde repo in pacman.conf', Color.ORANGE)
+    colprint(f'You should definitly backup your rootfs before proceeding', Color.ORANGE)
+    ask = input("\nType WHATEVER to continue\n", )
+    if ask != 'WHATEVER':
+        sys.exit()
+    revert_to_plasma()
