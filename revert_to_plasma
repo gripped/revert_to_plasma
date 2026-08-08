@@ -13,6 +13,7 @@ from pathlib import Path
 distro = 'artix'
 print_sys_cmds = True
 quiet = False
+
 OUTPUT = "OUT"
 EXIT_CODE = "EXIT"
 
@@ -63,7 +64,6 @@ def list_dirs():
 
 
 def list_installed():
-
     installed = []
     for p_dir in package_dirs:
         if run_command(f'pacman -Qq {p_dir}', EXIT_CODE) == 0:
@@ -165,7 +165,6 @@ if Path(repo_dir).is_dir():
 if not get_repo():
     colprint(f'failed to clone sonicde-{distro}. Exiting', Color.RED)
     sys.exit(1)
-
 
 package_dirs = list_dirs()
 installed_sonicde = list_installed()
