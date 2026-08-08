@@ -1,7 +1,6 @@
 #!/usr/bin/python -u
 #
-#  revert_to_plasma         List sonicde plasma equivalents.
-#                                          Optionally switch back to plasma from sonicde.
+#  revert_to_plasma         List sonicde plasma equivalents.  Optionally switch back to plasma from sonicde.
 #
 
 import argparse
