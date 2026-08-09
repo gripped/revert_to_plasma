@@ -84,10 +84,17 @@ def revert_to_plasma():
     )
 
     if result == 0:
-        run_command(
+        result = run_command(
             f"pacman -Syy --noconfirm --overwrite '*' {' '.join(plasma_pkgs)} plasma-x11-session",
             EXIT_CODE
         )
+    if result != 0:
+        colprint(f'Installing plasma failed. reinstalling sonicde packages. Check the output', Color.RED)
+        result = run_command(
+            f"pacman -Syy --noconfirm --overwrite '*' {' '.join(sonicde_pkgs)} sonic-x11-session",
+            EXIT_CODE
+        )
+        colprint(f'Installing plasma failed. reinstalled sonicde packages. Check the output', Color.RED)
 
 
 def run_command(cmd, opt):
