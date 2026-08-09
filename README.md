@@ -12,3 +12,5 @@
 
 Please backup your roofs first!
 Arch users should edit distro=artix to distro=arch .Untested.
+
+See https://forum.artixlinux.org/index.php/topic,10233.0.html for more info.
