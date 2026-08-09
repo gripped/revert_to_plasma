@@ -85,7 +85,7 @@ def revert_to_plasma():
 
     if result == 0:
         run_command(
-            f"pacman -Syy --noconfirm {' '.join(plasma_pkgs)} plasma-x11-session",
+            f"pacman -Syy --noconfirm --overwrite '*' {' '.join(plasma_pkgs)} plasma-x11-session",
             EXIT_CODE
         )
 
