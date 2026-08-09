@@ -11,3 +11,4 @@
 >     With no options given a list of installed sonicde plasma equivalents will be shown
 
 Please backup your roofs first!
+Arch users should edit distro=artix to distro=arch .Untested.
