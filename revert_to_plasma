@@ -40,11 +40,9 @@ def colprint(text, color=Color.END):
 def get_conflicts(lines):
     for line in lines:
         line = line.strip()
-
         if line.startswith('conflicts'):
             conflicts = line.split('(', 1)[1].split(')', 1)[0]
             return conflicts.split()
-
     return []
 
 
@@ -87,7 +85,7 @@ def revert_to_plasma():
 
     if result == 0:
         run_command(
-            f"pacman -S --noconfirm {' '.join(plasma_pkgs)} plasma-x11-session",
+            f"pacman -Syy --noconfirm {' '.join(plasma_pkgs)} plasma-x11-session",
             EXIT_CODE
         )
 
@@ -153,7 +151,7 @@ def plasma_equivs():
     colprint('List of installed sonicde packages and their plasma equivalents.', Color.CYAN)
     for equiv in equiv_list:
         print(f"sonicde: {equiv['sonicde']:<40} plasma: {', '.join(equiv['plasma'])}")
-    print(f"sonicde: {'sonic-x11-session':<40} plasma:")
+    print(f"sonicde: {'sonic-x11-session':<40} plasma: plasma-x11-session")
     return equiv_list
 
 
